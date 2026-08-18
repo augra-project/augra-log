@@ -1,0 +1,51 @@
+name: Bug Report
+description: Report a bug in augra-log
+labels: ["bug"]
+body:
+  - type: checkboxes
+    id: latest
+    attributes:
+      label: Version check
+      options:
+        - label: I am using the latest release
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: If not using the latest release, which version?
+      placeholder: "0.1.0"
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Linux
+        - Windows
+        - macOS
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps or code to trigger the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened instead?
+  - type: input
+    id: compiler
+    attributes:
+      label: Compiler and CMake version
+      placeholder: "GCC 14.2, CMake 3.28"
