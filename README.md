@@ -59,6 +59,5 @@ See the [docs/](docs/) folder for the full documentation:
 GPL-3.0-or-later. See [LICENSE](LICENSE) for details.
 
 ---
-
 This project is developed with tooled assistance, but tested, reviewed and
 signed off by a human developer.
