@@ -53,7 +53,7 @@ protected:
 
 private:
     LogLevel level_ = LogLevel::Trace;
-    std::string format_ = "[{level}] {component}: {message}";
+    std::string format_ = "{timestamp} [{level}] {component}: {message}";
 };
 
 class StderrHandler : public LogHandler {
