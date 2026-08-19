@@ -5,11 +5,39 @@
 #include <augra/log.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cstdio>
 #include <cstring>
+#include <ctime>
 #include <mutex>
 
 namespace augra {
+
+namespace {
+
+std::string format_timestamp()
+{
+    auto now = std::chrono::system_clock::now();
+    auto time_t_now = std::chrono::system_clock::to_time_t(now);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        now.time_since_epoch()) % 1000;
+
+    struct tm tm_buf{};
+#ifdef _WIN32
+    localtime_s(&tm_buf, &time_t_now);
+#else
+    localtime_r(&time_t_now, &tm_buf);
+#endif
+
+    char buf[64];
+    std::snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d.%03d",
+                  tm_buf.tm_year + 1900, tm_buf.tm_mon + 1, tm_buf.tm_mday,
+                  tm_buf.tm_hour, tm_buf.tm_min, tm_buf.tm_sec,
+                  static_cast<int>(ms.count()));
+    return buf;
+}
+
+} // anonymous namespace
 
 const char* log_level_name(LogLevel level)
 {
@@ -48,7 +76,9 @@ std::string LogHandler::format_output(LogLevel level, const char* component,
         }
 
         auto token = format_.substr(brace + 1, end - brace - 1);
-        if (token == "level") {
+        if (token == "timestamp") {
+            result.append(format_timestamp());
+        } else if (token == "level") {
             result.append(log_level_name(level));
         } else if (token == "component") {
             result.append(component);
@@ -164,6 +194,8 @@ LogLevel Logger::effective_level(const char* component) const
 
 LogLevel Logger::effective_level_unlocked(const char* component) const
 {
+    if (!component)
+        return level_;
     auto it = component_levels_.find(component);
     if (it != component_levels_.end())
         return it->second;
@@ -204,6 +236,8 @@ void Logger::clear_sinks()
 
 void Logger::log(LogLevel level, const char* component, const std::string& msg)
 {
+    if (!component)
+        component = "";
     std::lock_guard<std::mutex> lock(logger_mutex_);
     if (level < effective_level_unlocked(component))
         return;

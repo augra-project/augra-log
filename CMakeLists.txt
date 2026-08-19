@@ -14,12 +14,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_compile_options(-Wall -Wextra -Wpedantic -Werror=return-type)
-
 # Library target
 add_library(augra-log
     src/log.cpp
 )
+target_compile_options(augra-log PRIVATE -Wall -Wextra -Wpedantic -Werror=return-type)
 target_include_directories(augra-log
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

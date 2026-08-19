@@ -17,7 +17,7 @@ void print_banner()
     logger.info("augra_log", "     *@@@@@@*            A U G R A   L O G");
     logger.info("augra_log", "   *@@#**#@@* .          v0.1.0");
     logger.info("augra_log", " . *@@#*  #@@* .");
-    logger.info("augra_log", "   *@@#**#@@*            https://gitlab.com/the-augra-project/");
+    logger.info("augra_log", "   *@@#**#@@*            https://github.com/augra-project/augra-log");
     logger.info("augra_log", "     *@@@@@@*");
     logger.info("augra_log", "       ****              greetings to all who preserve. keep the old games alive.");
     logger.info("augra_log", "");

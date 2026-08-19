@@ -1,51 +1,134 @@
 name: Bug Report
 description: Report a bug in augra-log
-labels: ["bug"]
+title:       Think about the title, twice
+labels:      bug
+type:        bug
+
 body:
-  - type: checkboxes
-    id: latest
+  - type: markdown
+    id: intro
     attributes:
-      label: Version check
-      options:
-        - label: I am using the latest release
-  - type: input
+      value: |
+        ## Please fill out the form completely. Incomplete submissions will be closed!
+        #### Make sure that you have:
+        - provided a descriptive and succinct title
+        - have read all questions carefully have answered **all** of them
+
+  - type: checkboxes
     id: version
     attributes:
-      label: Version
-      description: If not using the latest release, which version?
-      placeholder: "0.1.0"
+      label: Are you using the latest version of augra-log?
+      description: |
+        Look up the latest release version on the [releases page](https://github.com/augra-project/augra-log/releases).
+      options:
+        - label: I have checked and I'm using the latest release.
+          required: true
+  - type: input
+    id: verinfo
+    attributes:
+      label: Different version than latest?
+      placeholder: "E.g., 0.3.0-alpha, git version, branch testing"
+    validations:
+      required: false
+
   - type: dropdown
     id: os
     attributes:
-      label: Operating system
+      label: What operating system are you using?
+      multiple: false
       options:
-        - Linux
-        - Windows
-        - macOS
+        - Please select
+        - Linux x86_64
+        - Windows 11
+        - Windows 10
+        - Windows 8
+        - Windows 7
+        - macOS (Intel)
+        - macOS (Apple Silicon)
         - Other
     validations:
       required: true
   - type: textarea
+    id: other_os
+    attributes:
+      label: OS details
+      description: |
+        Don't worry about getting every detail right. Whatever you can provide helps.
+
+        On Linux, this collects the useful bits:
+        ```
+        cat /etc/os-release | head -4
+        ```
+
+        On Windows, open a command prompt and run:
+        ```
+        systeminfo | findstr /B /C:"OS Name" /C:"OS Version" /C:"System Type"
+        ```
+
+        If you can't run these, just describe what you know. That's fine too.
+      placeholder: "Paste command output or describe your setup"
+    validations:
+      required: false
+  - type: textarea
+    id: build_environment
+    attributes:
+      label: Build environment
+      description: |
+        What is the build environment you are using?
+
+        Please add version information of your C++ compiler, language level,
+        build tools etc.
+
+        If your software tools have a --version parameter, it is useful to
+        include this here.
+      placeholder: "Paste command output or describe your build environment"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checked-dupes
+    attributes:
+      label: Have you checked that no other similar issue already exists?
+      options:
+        - label: I have searched and have not found similar issues.
+          required: true
+
+  - type: textarea
     id: description
     attributes:
-      label: What happened?
-      description: Describe the bug.
+      label: A clear and concise description of what the bug is
+      description: Describe what happens and in what context. Include a minimal code example if possible.
+      placeholder: "How and when does this occur?"
     validations:
       required: true
+
   - type: textarea
-    id: reproduce
+    id: steps
     attributes:
-      label: Steps to reproduce
-      description: Minimal steps or code to trigger the bug.
+      label: Steps to reproduce the behaviour
+      description: If we can't reproduce what you're experiencing, we can't fix it. Provide a minimal code example or detailed steps.
+      value: |
+        Explain in detail how to reproduce the bug.
+        1.
+        2.
+        3.
     validations:
       required: true
+
   - type: textarea
-    id: expected
+    id: log
     attributes:
-      label: Expected behavior
-      description: What should have happened instead?
-  - type: input
-    id: compiler
+      label: Provide a log or screenshot of the output
+      description: What exactly is the produced error message? For longer logs, use attachments or a [Gist](https://gist.github.com/).
+      placeholder: "Paste compiler output, error messages, or a short log"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: terms
     attributes:
-      label: Compiler and CMake version
-      placeholder: "GCC 14.2, CMake 3.28"
+      label: Contributing guidelines
+      description: By submitting this issue, you agree to follow our [contributing guidelines](https://github.com/augra-project/augra-log/blob/main/CONTRIBUTING.md).
+      options:
+        - label: Yes, I agree.
+          required: true

@@ -175,6 +175,15 @@ TEST_F(LogTest, ClearSinksStopsOutput)
     EXPECT_EQ(captured_.size(), 0u);
 }
 
+TEST_F(LogTest, NullComponentDoesNotCrash)
+{
+    Logger::instance().info(nullptr, "no component");
+
+    ASSERT_EQ(captured_.size(), 1u);
+    EXPECT_EQ(captured_[0].component, "");
+    EXPECT_EQ(captured_[0].message, "no component");
+}
+
 // -- Per-component level filtering --
 
 TEST_F(LogTest, ComponentLevelOverridesGlobal)
@@ -344,7 +353,24 @@ TEST_F(HandlerTest, DefaultFormatString)
     log_info("engine", "started");
 
     ASSERT_EQ(handler_->entries.size(), 1u);
-    EXPECT_EQ(handler_->entries[0].formatted, "[INFO] engine: started");
+    auto& fmt = handler_->entries[0].formatted;
+    EXPECT_NE(fmt.find("[INFO] engine: started"), std::string::npos);
+    EXPECT_EQ(fmt.size(), strlen("2026-08-19 00:15:32.123 ") + strlen("[INFO] engine: started"));
+}
+
+TEST_F(HandlerTest, TimestampInDefaultFormat)
+{
+    log_info("test", "hello");
+
+    ASSERT_EQ(handler_->entries.size(), 1u);
+    auto& fmt = handler_->entries[0].formatted;
+    EXPECT_EQ(fmt[4], '-');
+    EXPECT_EQ(fmt[7], '-');
+    EXPECT_EQ(fmt[10], ' ');
+    EXPECT_EQ(fmt[13], ':');
+    EXPECT_EQ(fmt[16], ':');
+    EXPECT_EQ(fmt[19], '.');
+    EXPECT_EQ(fmt[23], ' ');
 }
 
 TEST_F(HandlerTest, CustomFormatString)
