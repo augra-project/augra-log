@@ -8,6 +8,11 @@ Contributions are judged on their merit. If you used AI tools in the
 process, mention it in the PR description. No `.claude/` rules or AI
 configuration files should be included in contributions.
 
+However, it is required to state the used model and version, as well 
+as that you as a human developer read through it, understood it, 
+reviewed and tested it. Additional, it is required that you declare that
+you take full responsibility for the generated output.
+
 ## Bug reports
 
 Use the bug report issue template. Include the version you are using,
