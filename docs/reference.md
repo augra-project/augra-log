@@ -59,9 +59,10 @@ out unless you explicitly lower the threshold.
 const char* log_level_name(LogLevel level);
 ```
 
-Returns the uppercase string representation of a level. The returned
-pointer is to a static string, so it is valid for the lifetime of the
-program.
+If you need the uppercase string for a level - `"TRACE"`, `"DEBUG"`,
+`"INFO"`, `"WARN"`, `"ERROR"` - this is where you get it. The pointer
+points to a static string that lives for the lifetime of the program,
+so you can safely store or pass it around.
 
 ```cpp
 assert(strcmp(augra::log_level_name(augra::LogLevel::Warn), "WARN") == 0);
@@ -79,10 +80,11 @@ These are the primary logging interface for most code. Each one calls the
 corresponding method on `Logger::instance()`, so you get the singleton
 logger without having to grab a reference to it yourself.
 
-`component` is a short string that identifies the subsystem producing the
-message (e.g. `"parser"`, `"net"`). `fmt` is a printf-style format string,
-and `args` are the format arguments. If you pass no arguments, the format
-string is used as-is with no formatting overhead.
+The `component` argument is a short string that identifies the subsystem
+producing the message (e.g. `"parser"`, `"net"`). The `fmt` argument is a
+printf-style format string, and `args` are the format arguments. When you
+pass no arguments, the format string goes through as-is without any
+formatting overhead.
 
 ```cpp
 augra::log_info("config", "loaded %d entries from %s", count, path);
@@ -101,18 +103,19 @@ using LogSink = std::function<void(LogLevel level,
                                    const std::string& message)>;
 ```
 
-A callback that receives log messages in their raw form (level, component,
-already-formatted message string). Sinks exist alongside handlers and are
-called after them. Their main use is in tests, where you attach a lambda
+A callback that receives log messages in their raw form - level, component,
+and the already-formatted message string. Sinks exist alongside handlers
+and fire after them. Their main use is in tests, where you attach a lambda
 to capture output without touching the actual handlers.
 
 ---
 
 ## LogHandler (abstract base)
 
-The base class for all log output destinations. To write your own handler,
-subclass this and implement `emit()`. The base class gives you level
-filtering and format strings for free through the methods below.
+The base class for all log output destinations. If you want to send log
+output somewhere new, subclass this and implement `emit()`. The base class
+gives you level filtering and format strings for free through the methods
+below.
 
 ### set_level / level
 
@@ -121,10 +124,11 @@ void set_level(LogLevel level);
 LogLevel level() const;
 ```
 
-Controls the handler's own minimum severity threshold. A handler starts at
-Trace, meaning it accepts everything the logger sends its way. Raising the
-level lets you, for example, keep one handler at Debug for development
-while another only records Warn and above for the log file.
+Each handler has its own minimum severity threshold, independent of the
+logger's global level. A fresh handler starts at Trace, meaning it accepts
+everything the logger sends its way. You can raise the level to keep one
+handler at Debug for development while another only records Warn and above
+for the log file.
 
 ### set_format / format_string
 
@@ -150,9 +154,10 @@ handler->set_format("{level}:{component}:{message}");
 bool accepts(LogLevel level) const;
 ```
 
-Returns `true` when the given level is at or above the handler's threshold.
-Custom handler implementations should call this at the top of `emit()` to
-respect the handler-level filter.
+This is the check that tells you whether a given level would pass the
+handler's threshold - `true` when `level >= handler level`. Custom handler
+implementations should call this at the top of their `emit()` to respect
+the handler-level filter.
 
 ### emit (pure virtual)
 
@@ -163,8 +168,8 @@ virtual void emit(LogLevel level, const char* component,
 
 The logger calls this for each message that passes the global level filter.
 Your implementation should check `accepts()` first, then call
-`format_output()` to produce the formatted line, then write it to
-whatever output this handler represents.
+`format_output()` to produce the formatted line, and then write the result
+to whatever output this handler represents.
 
 ### format_output (protected)
 
@@ -173,9 +178,9 @@ std::string format_output(LogLevel level, const char* component,
                            const std::string& message) const;
 ```
 
-Applies the handler's format string to a message and returns the formatted
-line. This is a protected helper available to subclasses for use in their
-`emit()` implementation.
+A protected helper for subclasses. It takes the raw level, component, and
+message, applies the handler's format string, and gives you back the
+complete formatted line ready to write.
 
 ---
 
@@ -185,9 +190,9 @@ line. This is a protected helper available to subclasses for use in their
 class StderrHandler : public LogHandler;
 ```
 
-Writes each formatted line to stderr followed by a newline. The Logger
-constructor adds one of these by default, which is why logging works out
-of the box without any setup.
+The simplest built-in handler: each formatted line goes to stderr followed
+by a newline. The Logger constructor adds one of these by default, which is
+why logging works out of the box without any setup.
 
 ---
 
@@ -197,9 +202,9 @@ of the box without any setup.
 class StdoutHandler : public LogHandler;
 ```
 
-Same as StderrHandler, but writes to stdout and flushes after every line.
-The flush ensures messages appear promptly even when stdout is
-block-buffered (piped output, for instance).
+Same behavior as StderrHandler but writes to stdout, with a flush after
+every line. The flush matters when stdout is block-buffered - piped output,
+for instance, would otherwise accumulate in the buffer and appear in chunks.
 
 ---
 
@@ -209,9 +214,9 @@ block-buffered (piped output, for instance).
 class FileHandler : public LogHandler;
 ```
 
-Writes formatted lines to a file on disk. The file write itself is
-protected by its own mutex, so multiple threads can log through the same
-FileHandler safely.
+A handler that writes formatted lines to a file on disk. The file write
+is protected by its own mutex, so multiple threads can log through the same
+FileHandler without corrupting each other's output.
 
 ### Constructor
 
@@ -219,11 +224,11 @@ FileHandler safely.
 explicit FileHandler(const std::string& path, bool append = true);
 ```
 
-Opens the given path for writing. When `append` is true (the default),
-messages are added to the end of an existing file. When false, the file
-is truncated first. Always check `is_open()` afterward, because the
-constructor does not throw on failure - it just leaves the file pointer
-null.
+The path is opened for writing when you construct the handler. When
+`append` is true (the default), messages are added to the end of an
+existing file. When false, the file is truncated first. The constructor
+does not throw on failure - it leaves the file pointer null instead, so
+always check `is_open()` afterward.
 
 ### is_open
 
@@ -231,8 +236,10 @@ null.
 bool is_open() const;
 ```
 
-Returns whether the file was opened successfully. A closed FileHandler
-silently drops all messages sent to it.
+This tells you whether the file was actually opened. A FileHandler that
+failed to open silently drops every message sent to it rather than
+crashing, so checking this after construction lets you detect the problem
+early and report it through the logger itself:
 
 ```cpp
 auto fh = std::make_shared<augra::FileHandler>("app.log");
@@ -260,9 +267,11 @@ method locks an internal mutex, so all operations are safe from any thread.
 static Logger& instance();
 ```
 
-Returns the global Logger. On the first call, the constructor runs and
-installs a default StderrHandler at Info level. Subsequent calls return the
-same instance.
+This is how you get the logger. On the first call, the constructor runs and
+installs a default StderrHandler at Info level. Every call after that gives
+you the same instance. Most code never calls this directly because the free
+functions (`log_info`, `log_warn`, etc.) already use it internally, but you
+need it for configuration work: changing levels, adding handlers, and so on.
 
 ### set_level / level
 
@@ -271,9 +280,10 @@ void set_level(LogLevel level);
 LogLevel level() const;
 ```
 
-Controls the global minimum severity. Messages below this level are not
-dispatched to any handler or sink, unless a per-component override applies
-to the component in question. Both methods lock the mutex.
+The global minimum severity. Messages below this level are not dispatched
+to any handler or sink unless a per-component override applies to the
+component in question. You can change this safely from any thread - both
+methods lock the mutex.
 
 ### Component level overrides
 
@@ -304,8 +314,12 @@ methods lock the mutex.
 LogLevel effective_level(const char* component) const;
 ```
 
-Returns the level that actually applies for a given component: its override
-if one exists, otherwise the global level. Locks the mutex.
+If you need to know what level actually applies for a given component,
+this is where you ask. It gives you the component's own override if one
+has been set, or the global level otherwise. You rarely need to call this
+yourself since the logging methods check it internally, but it can be
+useful for conditional logic that should only run when a particular level
+is active. The call locks the mutex.
 
 ### Handler management
 
@@ -344,8 +358,8 @@ logger.add_sink([&](augra::LogLevel, const char*, const std::string& msg) {
 });
 ```
 
-`clear_sinks()` removes all sinks. It does not touch the handler list -
-sinks and handlers are independent. Both methods lock the mutex.
+Calling `clear_sinks()` removes all sinks but does not touch the handler
+list - sinks and handlers are independent. Both methods lock the mutex.
 
 ### log
 
@@ -353,14 +367,14 @@ sinks and handlers are independent. Both methods lock the mutex.
 void log(LogLevel level, const char* component, const std::string& msg);
 ```
 
-The core dispatch method. It checks the effective level for the given
-component, then walks the handler list calling `emit()` on each one,
+Everything funnels through here. The method checks the effective level for
+the given component, walks the handler list calling `emit()` on each one,
 then invokes each sink. The convenience template methods (`trace` through
 `error`) call this after formatting the message string.
 
 The mutex is held for the entire dispatch, so handler `emit()` calls
-happen under the lock. This means handlers should not block for
-significant time, or they will stall other threads trying to log.
+happen under the lock. Handlers that block for significant time will stall
+other threads trying to log.
 
 ### Convenience methods
 
@@ -370,22 +384,21 @@ void trace(const char* component, const char* fmt, Args&&... args);
 // same for debug, info, warn, error
 ```
 
-Each of these checks `effective_level()` first. If the message would be
-filtered, it returns immediately without formatting the string - so
-disabled levels have zero cost beyond the comparison. If the message
-passes, it formats the arguments with `snprintf` and hands the result
-to `log()`.
+Each of these checks `effective_level()` first. When the message would be
+filtered, the call returns immediately without formatting the string, so
+disabled levels cost nothing beyond the comparison. When the message passes,
+the arguments are formatted with `snprintf` and the result goes to `log()`.
 
 ```cpp
 auto& logger = augra::Logger::instance();
 logger.info("engine", "frame %d rendered in %.1f ms", frame, dt_ms);
 ```
 
-The level check and the `log()` call each acquire the mutex separately.
-The format string is evaluated between the two acquisitions. This is safe
+The level check and the `log()` call each acquire the mutex separately,
+with the format string evaluated between the two acquisitions. This is safe
 because the level check is a fast-path filter, not part of a transaction:
-if the level changes between the two locks, the worst case is one extra
-message getting through or one message getting formatted and then dropped.
+if the level changes between the two locks, the worst that happens is one
+extra message getting through or one formatted message getting dropped.
 
 ---
 
